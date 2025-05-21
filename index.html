@@ -7,6 +7,16 @@
   <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#5a90b8" /> 
 
+<!-- Android / Chrome 狀態列主色（亮色） -->
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<!-- Android / Chrome 狀態列主色（暗色） -->
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+
+<!-- iOS Safari 狀態列顏色（僅在加到主畫面時生效） -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default"> <!-- 可改成 black 或 black-translucent -->
+
+
  <style>
 
   .heart-svg-wrapper {
