@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>counter</title>
+  <style>
+  
+  .heart-svg-wrapper {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  transform: rotate(var(--angle)) scale(var(--scale)) translateY(0);
+  animation: heart-fade 1s ease-out forwards;
+  pointer-events: none;
+  user-select: none;
+  z-index: 9999;
+  color: #d27474; /* 你可改成任何你想要的顏色，或動態設定 */
+}
+
+  
+  
+    :root {
+      --bg: #f2f6f8;
+      --primary: #5a90b8;
+      --text: #fff;
+      --muted: #6a7b8a;
+      --card: #ffffff;
+      --today: #dcefff;
+    }
+
+:root.dark-mode {
+  --bg: #121212;
+  --primary: #2c3e50;
+  --text: #ffffff;
+  --muted: #aaaaaa;
+  --card: #1e1e1e;
+  --today: #2f4f4f;
+}
+
+.dark-mode .day {
+  background: #2b2b2b;  /* 深灰色，可自由換色 */
+  color: #e0e0e0;        /* 如果你希望文字也亮一點 */
+}
+.dark-mode .today {
+  background: #6b6882; /* ✅ 強制覆蓋為你指定的深綠灰色 */
+  color: #ffffff;
+  border: 2px solid var(--primary);
+}
+
+.dark-mode button {
+  color: var(--muted) !important;
+}
+
+.action-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  background: var(--primary); /* ✅ 改用變數 */
+  color: white;
+}
+
+.dark-mode .action-btn {
+  color: var(--muted);
+}
+
+.dark-mode .monthly-label {
+  color: #dddddd;
+}
+
+.dark-mode .month-nav span {
+  color: #dddddd;
+}
+
+.dark-mode .monthly-box {
+  background: #888888; /* 或用 #999999、#a0a0a0 */
+  color: #ffffff;
+}
+
+.dark-mode .monthly-box::before {
+  color: #dddddd;
+}
+
+
+    * { box-sizing: border-box; }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      font-family: "Helvetica Neue", sans-serif;
+    }
+
+.icon-bg {
+  width: 60%;
+  height: 60%;
+  background-image: url('reset.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.counter-screen .tap-area {
+height: calc(100dvh - 10px);
+  width: calc(100% - 10px);
+  margin: 5px;
+  border-radius: 5vw;
+  background: var(--primary);
+  color: #dde6ee;
+  font-size: 30vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  user-select: none;
+  transition: background 0.3s;
+
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+}
+
+.tap-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  padding: 2vh 4vw;
+  line-height: 1.1;
+}
+
+.count-number {
+  font-size: clamp(20vw, 28vw, 32vw); /* 響應式主數字 */
+  font-weight: bold;
+  line-height: 1;
+}
+
+.group-number {
+  font-size: clamp(4vw, 5vw, 6vw);   /* 響應式小字 */
+  align-self: flex-end;
+  margin-top: 0.3em;
+  margin-right: clamp(12vw, 18vw, 25vw);  /* 根據螢幕寬度自動控制距邊距 */
+  opacity: 0.8;
+}
+
+
+
+    .calendar-screen {
+      display: none;
+      padding: 16px;
+      background: var(--card);
+      border-top: 2px solid #ccc;
+      border-radius: 24px;
+      margin: 5px;
+    }
+
+    .calendar-screen.active { display: block; }
+
+    .calendar-header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .calendar-header .month-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .calendar-header .month-nav button {
+      font-size: 1.2rem;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .weekday {
+      text-align: center;
+      font-weight: bold;
+      color: var(--muted);
+    }
+
+    .day {
+      height: 50px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      text-align: center;
+      padding-top: 4px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .day .info { font-size: 0.7rem; color: #999; }
+    .today { background: var(--today); font-weight: bold; border: 2px solid var(--primary); }
+    .group-only .info, .group-only {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #f5a623;
+    }
+
+    .circle-btn {
+      position: fixed;
+      top: 10px;
+      background: #6b8797;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      font-size: 1.2rem;
+      border: none;
+      color: black !important;
+      -webkit-text-fill-color: black !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .toggle-calendar-btn { right: 110px; }
+    .reset-btn { left: 10px; touch-action: manipulation; }
+    .play-btn { right: 10px; }
+    .speed-btn { right: 60px; font-size: 0.9rem; }
+	.theme-btn { right: 160px; /* 根據其他按鈕調整 */
+}
+
+    .monthly-box {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #f5a623;
+      font-weight: bold;
+      color: #333;
+    }
+
+.date-update-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  z-index: 2000;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+
+
+
+@keyframes fadeInOutDynamic {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+
+.heart {
+  position: absolute;
+  font-size: 2rem;
+  color: rgba(255, 100, 130, 0.8);
+  animation: heart-fade 1s ease-out forwards;
+  pointer-events: none;
+  user-select: none;
+  z-index: 9999;
+
+  transform: rotate(var(--angle)) scale(var(--scale)) translateY(0); /* 這行是關鍵 */
+}
+
+@keyframes heart-fade {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--angle)) scale(var(--scale)) translateY(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) scale(var(--scale)) translateY(-60px);
+  }
+}
+
+
+
+
+
+    .circle-btn img.icon {
+      width: 60%;
+      height: 60%;
+      object-fit: contain;
+      display: block;
+      margin: auto;
+    }
+	
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  font-family: "Helvetica Neue", sans-serif;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+
+  /* 以下是新增的，針對手機防止長按選單 */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+
+
+	
+	
+	
+  </style>
+</head>
+<body>
+  <!-- 控制按鈕 -->
+<button class="circle-btn theme-btn" onclick="toggleTheme()" aria-label="切換主題">
+  <svg viewBox="0 0 100 100" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <mask id="half-mask">
+        <rect x="0" y="0" width="50" height="100" fill="white" />
+      </mask>
+    </defs>
+    <circle cx="50" cy="50" r="50" fill="#b1c0c9" />
+    <circle cx="50" cy="50" r="50" fill="black" mask="url(#half-mask)" />
+  </svg>
+</button>
+
+  <button class="circle-btn play-btn" onclick="togglePlay()">
+    <img src="playpause.png" alt="播放暫停" class="icon" />
+  </button>
+  <button class="circle-btn speed-btn" onclick="toggleSpeed()">1x</button>
+<button class="circle-btn reset-btn">
+<div class="icon-bg"
+     draggable="false"
+     oncontextmenu="return false"
+     ontouchstart="event.preventDefault()"
+     style="user-select: none; -webkit-user-drag: none;"></div>
+
+</button>
+
+  <button class="circle-btn toggle-calendar-btn" onclick="toggleCalendar()">
+    <img src="calendar.png" alt="月曆" class="icon" />
+  </button>
+
+  <!-- 計數器 + 月曆區塊 -->
+  <div id="counterScreen" class="counter-screen">
+    <div class="tap-area" id="tapArea">0 / 0</div>
+    <div id="calendarScreen" class="calendar-screen">
+      <div class="calendar-header">
+        <div class="month-nav">
+          <button onclick="changeMonth(-1)">←</button>
+          <span id="monthLabel"></span>
+          <button onclick="changeMonth(1)">→</button>
+        </div>
+      </div>
+      <div class="calendar-grid" id="calendarWeekdays"></div>
+      <div class="calendar-grid" id="calendarDays"></div>
+      <div style="margin-top:8px; font-weight:bold; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap: wrap;">
+  <div class="monthly-label">本月組數：<div class="monthly-box"><span id="monthlyTotal">0</span></div></div>
+  <div style="display:flex; gap:8px;">
+<button class="action-btn" onclick="exportData()">備份</button>
+<button class="action-btn" onclick="importData()">還原</button>
+  </div>
+</div>
+<textarea id="importArea" placeholder="貼上備份資料後，按「還原」鍵" style="width:100%;height:80px;margin-top:6px;display:none;resize:none;"></textarea>
+    </div>
+  </div>
+  <audio id="bgm" loop>
+    <source src="background.mp3" type="audio/mpeg">
+  </audio>
+  <script>
+  const countEl = document.getElementById('tapArea');
+  const calendarScreen = document.getElementById('calendarScreen');
+  const calendarDaysEl = document.getElementById('calendarDays');
+  const calendarWeekdaysEl = document.getElementById('calendarWeekdays');
+  const monthLabelEl = document.getElementById('monthLabel');
+  const monthlyTotalEl = document.getElementById('monthlyTotal');
+  const audio = document.getElementById('bgm');
+  const speedBtn = document.querySelector('.speed-btn');
+  const calendarBtn = document.querySelector('.toggle-calendar-btn');
+  const resetBtn = document.querySelector('.reset-btn');
+
+  let today = new Date();
+  let todayKey = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+  let currentYear = today.getFullYear();
+  let currentMonth = today.getMonth();
+  let currentSpeed = 1;
+
+  let monthData = JSON.parse(localStorage.getItem('monthData')) || {};
+  let count = parseInt(localStorage.getItem('count')) || 0;
+  let group = parseInt(localStorage.getItem('group')) || 0;
+
+
+
+function showFloatingToast(message, duration = 5000) {
+  const toast = document.createElement('div');
+  toast.className = 'date-update-toast';
+toast.innerHTML = message;
+
+
+  // 動態指定動畫長度
+  toast.style.animation = `fadeInOutDynamic ${duration / 1000}s forwards`;
+
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), duration);
+}
+
+
+function checkDateUpdate() {
+  const newDate = new Date();
+  const newKey = `${newDate.getFullYear()}-${newDate.getMonth() + 1}-${newDate.getDate()}`;
+  if (newKey !== todayKey) {
+    monthData[todayKey] = { group };
+    localStorage.setItem('monthData', JSON.stringify(monthData));
+    today = newDate;
+    todayKey = newKey;
+    currentYear = today.getFullYear();
+    currentMonth = today.getMonth();
+    group = 0;
+    updateCounterDisplay();
+
+    showFloatingToast('日期已更新至今天', 3000); // ✅ 替代舊的函式
+    save();
+    if (calendarScreen.classList.contains('active')) renderCalendar(currentYear, currentMonth);
+  }
+}
+
+
+  setInterval(checkDateUpdate, 60000);
+  function setMidnightCheck() {
+    const now = new Date();
+    const t = new Date(now);
+    t.setDate(t.getDate() + 1);
+    t.setHours(0, 0, 10, 0);
+    const delay = t - now;
+    setTimeout(() => {
+      checkDateUpdate();
+      setMidnightCheck();
+    }, delay);
+  }
+  setMidnightCheck();
+
+  function save() {
+    localStorage.setItem('count', count);
+    localStorage.setItem('group', group);
+    monthData[todayKey] = { count, group };
+    localStorage.setItem('monthData', JSON.stringify(monthData));
+    if (calendarScreen.classList.contains('active')) renderCalendar(currentYear, currentMonth);
+  }
+
+  function updateCounterDisplay() {
+countEl.innerHTML = `
+  <div class="count-number">${count}</div>
+  <div class="group-number">/ ${group}</div>
+`;
+  }
+
+function incrementCounter(e) {
+    count++;
+    if (count >= 108) {
+      count = 0;
+      group++;
+    }
+    updateCounterDisplay();
+    save();
+	  showHeart(e);
+
+  }
+// 📌 更快的點擊響應：用 pointerdown 替代 touchstart
+const tapArea = document.getElementById('tapArea');
+
+tapArea.addEventListener('pointerdown', (e) => {
+  incrementCounter(e);
+});
+
+
+
+  let pressTimer;
+resetBtn.addEventListener('pointerdown', () => {
+  pressTimer = setTimeout(() => {
+    count = 0;
+    updateCounterDisplay();
+    save();
+    showFloatingToast('已歸零計數', 3000);
+  }, 1200);
+});
+
+
+
+
+
+
+    
+  resetBtn.addEventListener('pointerup', () => {
+    clearTimeout(pressTimer);
+  });
+
+  function toggleCalendar() {
+    const visible = calendarScreen.classList.toggle('active');
+    const icon = calendarBtn.querySelector('img');
+    icon.src = visible ? 'back.png' : 'calendar.png';
+    icon.alt = visible ? '返回' : '月曆';
+    if (visible) renderCalendar(currentYear, currentMonth);
+  }
+
+  function getDaysInMonth(y, m) {
+    return new Date(y, m + 1, 0).getDate();
+  }
+
+  function renderCalendar(y, m) {
+    calendarDaysEl.innerHTML = '';
+    calendarWeekdaysEl.innerHTML = '';
+    ['一','二','三','四','五','六','日'].forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'weekday';
+      el.textContent = d;
+      calendarWeekdaysEl.appendChild(el);
+    });
+
+    const days = getDaysInMonth(y, m);
+    const firstDay = new Date(y, m, 1).getDay();
+    const offset = firstDay === 0 ? 6 : firstDay - 1;
+    let total = 0;
+    for (let i = 0; i < offset; i++) calendarDaysEl.appendChild(document.createElement('div'));
+
+    for (let i = 1; i <= days; i++) {
+      const key = `${y}-${m + 1}-${i}`;
+      const d = document.createElement('div');
+      d.className = 'day';
+      const dateObj = new Date(y, m, i);
+      const isToday = key === todayKey;
+      const isFuture = dateObj > new Date();
+      const isPast = !isToday && !isFuture;
+      const data = monthData[key];
+      let infoHTML = '';
+
+      if (isToday) {
+        d.classList.add('today');
+        infoHTML = `${count}/${group}`;
+        total += group;
+      } else if (isPast) {
+        const g = data?.group || 0;
+        if (g > 0) infoHTML = `<span class="group-only">${g}</span>`;
+        total += g;
+      } else {
+        const c = data?.count ?? 0;
+        const g = data?.group ?? 0;
+        infoHTML = `${c}/${g}`;
+      }
+      d.innerHTML = `${i}<div class="info">${infoHTML}</div>`;
+      calendarDaysEl.appendChild(d);
+    }
+    monthLabelEl.textContent = `${y} 年 ${m + 1} 月`;
+    monthlyTotalEl.textContent = total;
+  }
+
+  function changeMonth(offset) {
+    currentMonth += offset;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    } else if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+    renderCalendar(currentYear, currentMonth);
+  }
+
+  function togglePlay() {
+    if (audio.paused) audio.play();
+    else audio.pause();
+  }
+
+  function toggleSpeed() {
+    if (currentSpeed === 1) currentSpeed = 1.5;
+    else if (currentSpeed === 1.5) currentSpeed = 2;
+    else if (currentSpeed === 2) currentSpeed = 2.5;
+    else if (currentSpeed === 2.5) currentSpeed = 3;
+    else currentSpeed = 1;
+    audio.playbackRate = currentSpeed;
+    speedBtn.textContent = currentSpeed + 'x';
+  }
+
+function exportData() {
+  const allData = {
+    count,
+    group,
+    monthData
+  };
+  const json = JSON.stringify(allData);
+  navigator.clipboard.writeText(json).then(() => {
+    showFloatingToast('✅ 資料已複製<br>開啟 Gmail，貼上內容並寄給自己做備份', 10000)  });//10秒
+}
+
+
+
+  function importData() {
+    const textarea = document.getElementById('importArea');
+    if (textarea.style.display === 'none') {
+      textarea.style.display = 'block';
+      textarea.focus();
+      return;
+    }
+    const input = document.getElementById('importArea').value;
+    try {
+      const parsed = JSON.parse(input);
+      count = parsed.count || 0;
+      group = parsed.group || 0;
+      monthData = parsed.monthData || {};
+      save();
+      updateCounterDisplay();
+      showFloatingToast('✅ 還原成功', 5000);//5秒
+    } catch {
+      showFloatingToast('⚠️ 格式錯誤，請確認貼上的資料', 5000);//5秒
+    }
+  }
+
+  updateCounterDisplay();
+  
+function showHeart(e) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'heart';
+  
+  // 隨機顏色（以你指定的莫蘭迪色為例）
+  const colors = [
+    '#d8a7a7', '#a8b5a2', '#b7aab6', '#8c9fae',
+    '#e7e2dc', '#d5b19e', '#a8a29e', '#998c6b'
+  ];
+  wrapper.style.color = colors[Math.floor(Math.random() * colors.length)];
+
+  // 隨機角度與縮放
+  const angle = (Math.random() * 60 - 30).toFixed(1);
+  const scale = (1 + Math.random() * 3).toFixed(2);
+  const offsetX = (Math.random() * 20 - 10).toFixed(1); // 水平偏移
+
+  wrapper.style.setProperty('--angle', `${angle}deg`);
+  wrapper.style.setProperty('--scale', scale);
+  wrapper.style.setProperty('--x', `${offsetX}px`);
+
+  wrapper.style.left = `${e.clientX}px`;
+  wrapper.style.top = `${e.clientY}px`;
+
+  // ✅ 插入愛心 SVG，內含 +1 文字
+  wrapper.innerHTML = `
+<svg width="40" height="40" viewBox="0 0 24 24"
+     fill="none" stroke="currentColor" stroke-width="2"
+     xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 19.5C12 19.5 3.5 13.2 3.5 8.4C3.5 5.8 5.7 4 8.1 4
+           C9.8 4 11.1 4.9 12 6.2C12.9 4.9 14.2 4 15.9 4
+           C18.3 4 20.5 5.8 20.5 8.4C20.5 13.2 12 19.5 12 19.5Z"/>
+  <text x="12" y="13.5"
+        text-anchor="middle"
+        font-size="6"
+        fill="currentColor"
+        stroke="none"
+        font-weight="bold">+1</text>
+</svg>
+
+  `;
+
+  document.body.appendChild(wrapper);
+  setTimeout(() => wrapper.remove(), 2000);
+}
+
+
+
+
+  
+  
+  
+  // 防止 iOS/Android 雙擊放大
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function (event) {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) {
+    event.preventDefault(); // 阻止雙擊縮放
+  }
+  lastTouchEnd = now;
+}, false);
+
+// ✅ 全頁攔截右鍵與長按選單（iOS + Android）
+document.addEventListener('contextmenu', e => e.preventDefault(), true);
+
+document.addEventListener('touchstart', e => {
+  if (e.touches.length > 1) return; // 忽略多指操作
+  this._touchStartTime = Date.now();
+}, { passive: false });
+
+document.addEventListener('touchend', e => {
+  const duration = Date.now() - (this._touchStartTime || 0);
+  if (duration > 500) e.preventDefault(); // 長按才攔截
+}, { passive: false });
+
+// ✅ 歸零鍵圖示額外防護（防止圖片長按被儲存）
+const iconBg = document.querySelector('.icon-bg');
+if (iconBg) {
+  iconBg.addEventListener('touchstart', e => {
+    e.preventDefault();
+    iconBg._longPressTimer = setTimeout(() => {}, 99999);
+  }, { passive: false });
+
+  iconBg.addEventListener('touchend', e => {
+    clearTimeout(iconBg._longPressTimer);
+  }, { passive: false });
+
+  iconBg.addEventListener('contextmenu', e => e.preventDefault());
+  iconBg.addEventListener('pointerdown', e => e.preventDefault());
+  iconBg.addEventListener('mousedown', e => e.preventDefault());
+  iconBg.addEventListener('dragstart', e => e.preventDefault());
+}
+function toggleTheme() {
+  document.documentElement.classList.toggle('dark-mode'); // ✅ document.documentElement 就是 <html>
+  localStorage.setItem(
+    'theme',
+    document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light'
+  );
+}
+
+
+// 初始化時讀取使用者上次設定
+if (localStorage.getItem('theme') === 'dark') {
+  document.documentElement.classList.add('dark-mode'); // ✅ 加在 <html> 而非 <body>
+}
+
+
+  
+</script>
+</body>
+</html>
+
