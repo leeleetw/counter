@@ -1,4 +1,4 @@
-const CACHE_NAME = "counter-v1";
+const CACHE_NAME = "counter-v2";
 const urlsToCache = [
   "./",
   "./index.html",
